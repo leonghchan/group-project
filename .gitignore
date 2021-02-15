@@ -128,3 +128,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Local files (e.g. jupyter notebooks)
+local/
