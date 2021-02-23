@@ -7,13 +7,14 @@ Description: main file
 """
 
 from load import load
+from fit import analyse
 
 def main():
     """ main function """
     
     train_data = load()
-    print(train_data.head()
-            )
+    # analyse(train_data['SalePrice'])
+    analyse(train_data)
 
 if __name__ == '__main__':
     main()
