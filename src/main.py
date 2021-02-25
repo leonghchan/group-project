@@ -7,14 +7,17 @@ Description: main file
 """
 
 from load import load
-from fit import analyse
+from load import clean
 
 def main():
     """ main function """
+
+    drops = ['PoolQC', 'MiscFeature', 'FireplaceQu', 'Id']
+    fills = {'MasVnrArea': 0.0, 'LotFrontage': 0.0}
     
     train_data = load()
-    # analyse(train_data['SalePrice'])
-    analyse(train_data)
+    train_data = clean(train_data, drop_list=drops, fill_na=fills, dummies=True)
+    print(train_data)
 
 if __name__ == '__main__':
     main()
