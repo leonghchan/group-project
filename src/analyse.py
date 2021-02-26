@@ -27,8 +27,3 @@ def analyse(variable):
     else:
         print("You must supply either a pandas Series or DataFrame. You gave{}".format(type(variable)))
 
-def fit(variable):
-    pass
-
-def transform():
-    pass
