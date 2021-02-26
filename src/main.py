@@ -8,6 +8,7 @@ Description: main file
 
 from load import load
 from load import clean
+from analyse import test_trans
 
 def main():
     """ main function """
@@ -23,7 +24,9 @@ def main():
     elec_na = train_data["Electrical"].isna()
     train_data.drop(elec_na.loc[elec_na == True].index, inplace=True)
 
-    print(train_data)
+    test_trans(train_data[['LotArea']])
+    # print(test_trans(train_data[['SalePrice']]))
+
 
 if __name__ == '__main__':
     main()
