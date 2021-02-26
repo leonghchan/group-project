@@ -15,14 +15,10 @@ def load(csv='train'):
     return df
 
 
-def clean(df, drop_list=[], fill_na={}, dummies=True):
+def clean(df, drop_list=[], fill_na={}):
     """Helper function for cleaning up Housing Prices dataframe"""
 
-
     if drop_list:
-        # Electrical variable has single null value, we choose to drop it
-        df.drop(1379, inplace=True)
-
         # Drop any columns supplied in the drop_list
         df.drop(drop_list, inplace=True, axis=1)
 
@@ -39,13 +35,12 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
     """Scales, transforms, and computes dummies for variables in training
     dataset"""
 
-    if dummies:
-        # Convert categorical variables to numerical dummy variables
-        df = pd.get_dummies(df)
-
     if scale_list:
         pass
 
     if transform_list:
         pass
 
+    # Convert categorical variables to numerical dummy variables
+    if dummies:
+        df = pd.get_dummies(df)
