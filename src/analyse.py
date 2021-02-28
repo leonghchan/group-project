@@ -10,7 +10,6 @@ import seaborn as sns
 # from numpy import reshape
 from scipy import stats
 from sklearn.preprocessing import RobustScaler
-from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import PowerTransformer
 
 
@@ -39,13 +38,12 @@ def test_trans(variable):
     plots before and after results to check for normality"""
 
     scaler = RobustScaler()
-#     scaler = StandardScaler() 
     col_name = variable.columns[0]
     variable = variable.rename(columns={col_name:'raw'})
     scaler.fit(variable)
       
     variable['scaled'] = scaler.transform(variable)
-    pt = PowerTransformer(standardize=False)
+    pt = PowerTransformer()
     pt.fit(variable[['scaled']])
     trans_var = pt.transform(variable[['scaled']])
     variable['transformed'] = trans_var

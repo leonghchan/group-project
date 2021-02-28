@@ -35,12 +35,22 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
     """Scales, transforms, and computes dummies for variables in training
     dataset"""
 
-    if scale_list:
-        pass
+    pipe_dict = {}
 
-    if transform_list:
-        pass
+    if scale_list:
+        for var in scale_list:
+            if var in transform_list:
+                pipeline = Pipeline([('scaler', RobustScaler()),('transform',
+                    PowerTransformer())])                
+            else:
+                pipeline = Pipeline([('scaler', RobustScaler())])                
+
+            df[var] = pipeline.fit(df[[var]]).transform(df[[var]])
+            pipe_dict[var] = pipeline
 
     # Convert categorical variables to numerical dummy variables
     if dummies:
         df = pd.get_dummies(df)
+
+    return df, pipe_dict
+
