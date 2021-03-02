@@ -17,18 +17,19 @@ def load(csv='train'):
 
 def clean(df, drop_list=[], fill_na={}):
     """Helper function for cleaning up Housing Prices dataframe"""
+    update_df = df
 
     if drop_list:
         # Drop any columns supplied in the drop_list
-        df.drop(drop_list, inplace=True, axis=1)
+        update_df = df.drop(drop_list, axis=1)
 
     if fill_na:
         # For any key, value pairs in the supplied dictionary, set null values
         # to fill_val for the given variable
         for variable, fill_val in fill_na.items():
-            df[variable] = df[variable].fillna(value=fill_val)
+            update_df[variable] = update_df[variable].fillna(value=fill_val)
 
-    return df
+    return update_df
 
 
 def preprocess(df, scale_list=[], transform_list=[], dummies=True):
