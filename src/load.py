@@ -17,7 +17,7 @@ def load(csv='train'):
 
 def clean(df, drop_list=[], fill_na={}):
     """Helper function for cleaning up Housing Prices dataframe"""
-    update_df = df
+    update_df = df.copy()
 
     if drop_list:
         # Drop any columns supplied in the drop_list
