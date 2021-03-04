@@ -21,7 +21,7 @@ def clean(df, drop_list=[], fill_na={}):
 
     if drop_list:
         # Drop any columns supplied in the drop_list
-        update_df = df.drop(drop_list, axis=1)
+        update_df = update_df.drop(drop_list, axis=1)
 
     if fill_na:
         # For any key, value pairs in the supplied dictionary, set null values
