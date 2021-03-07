@@ -6,15 +6,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import RobustScaler, PowerTransformer
 
 
-def load(csv='train'):
-    """Read CSV file and return pandas dataframe. Default is to read training
-    data, but supplying 'test' string as argument reads validation dataset"""
-
-    df = pd.read_csv("../data/{}.csv".format(csv))
-
-    return df
-
-
 def clean(df, drop_list=[], fill_na={}):
     """Helper function for cleaning up Housing Prices dataframe"""
     update_df = df.copy()
