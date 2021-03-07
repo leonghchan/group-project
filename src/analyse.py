@@ -23,12 +23,14 @@ def analyse(variable):
     if isinstance(variable, pd.core.frame.Series):
         results = pd.DataFrame({"Skewness": variable.skew(), "Kurtosis":
             variable.kurtosis()}, index=[variable.name])
-        print(results)
+        return results
+
     elif isinstance(variable, pd.core.frame.DataFrame):
         results = pd.DataFrame()
         results["Skewness"] = variable.skew()
         results["Kurtosis"] = variable.kurtosis()
-        print(results.sort_values("Skewness", ascending=False))
+        results.sort_values("Skewness", ascending=False, inplace=True)
+        return results
     else:
         print("You must supply either a pandas Series or DataFrame. You gave{}".format(type(variable)))
 
