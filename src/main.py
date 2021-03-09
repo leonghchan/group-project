@@ -6,11 +6,12 @@ Github: https://github.com/headcase
 Description: main file
 """
 
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from load import load
-from load import clean
-from load import preprocess
+from preprocess import clean
+# from preprocess import preprocess
+from preprocess import feat_create
 from analyse import test_trans
 
 
@@ -22,18 +23,32 @@ def main():
     scale = ['SalePrice', 'LotArea']
     transform = ['SalePrice']
     
-    train_data = load()
-    train_data = clean(train_data, drop_list=drops, fill_na=fills)
-    
+    train_data = pd.read_csv('../data/train.csv')
+
     # The electrical variable has one null value, we elect to delete this
     # observation
     elec_na = train_data["Electrical"].isna()
-    train_data.drop(elec_na.loc[elec_na == True].index, inplace=True)
+    clean_data = train_data.drop(elec_na.loc[elec_na == True].index)
 
-
-    print(train_data['LotArea'].head())
-    preproc_df, pipelines = preprocess(train_data, scale_list=scale, transform_list=transform)
-    print(train_data['LotArea'].head())
+    clean_data = clean(clean_data, drop_list=drops, fill_na=fills)
+    new_feats = {
+            "Total_Bath": 
+                {
+                    1:['BsmtFullBath','FullBath'], 
+                    0.5: ['BsmtHalfBath', 'HalfBath']
+                },
+            "Porch_SF":
+                {
+                    1: ['WoodDeckSF', 'OpenPorchSF', 'EnclosedPorch',
+                        '3SsnPorch', 'ScreenPorch']
+                },
+            "Total_SF":
+                {
+                    1: ['TotalBsmtSF', '1stFlrSF', '2ndFlrSF'] 
+                }
+            }
+    add_feats = feat_create(clean_data, new_feats)
+    print(add_feats[['Total_Bath', 'Porch_SF', 'Total_SF']])
 
 
 if __name__ == '__main__':

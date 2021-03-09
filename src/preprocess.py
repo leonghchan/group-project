@@ -6,17 +6,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import RobustScaler, PowerTransformer
 
 
-def load(csv='train'):
-    """Read CSV file and return pandas dataframe. Default is to read training
-    data, but supplying 'test' string as argument reads validation dataset"""
-
-    df = pd.read_csv("../data/{}.csv".format(csv))
-
-    return df
-
-
 def clean(df, drop_list=[], fill_na={}):
     """Helper function for cleaning up Housing Prices dataframe"""
+    
+    # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
+    # notebooks when editing source DataFrame directly
     update_df = df.copy()
 
     if drop_list:
@@ -31,10 +25,38 @@ def clean(df, drop_list=[], fill_na={}):
 
     return update_df
 
+def feat_create(df, feat_dict):
+    """Accepts a DataFrame and a nested dictionary used to compute new features
+    from existing features. Top-level key describes name of output column;
+    second level key describes multiplier to be used on source features; values
+    are lists of columns to be used for compositing. For example: {"TotalBath":
+    {1: ['FullBath'], 0.5:['HalfBath']}}"""
+
+    # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
+    # notebooks when editing source DataFrame directly
+    update_df = df.copy()
+
+    for out_feat, in_feat in feat_dict.items():
+        new_col = pd.Series()
+
+        for multiplier, feats in in_feat.items():
+            new_col = new_col.add(multiplier * update_df[feats].sum(axis=1),
+                    fill_value=0)
+
+        update_df[out_feat] = new_col
+
+    return update_df
+
+def ordinal_create():
+    pass
 
 def preprocess(df, scale_list=[], transform_list=[], dummies=True):
     """Scales, transforms, and computes dummies for variables in training
     dataset"""
+
+    # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
+    # notebooks when editing source DataFrame directly
+    update_df = df.copy()
 
     pipe_dict = {}
 
@@ -46,12 +68,12 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
             else:
                 pipeline = Pipeline([('scaler', RobustScaler())])                
 
-            df[var] = pipeline.fit(df[[var]]).transform(df[[var]])
+            update_df[var] = pipeline.fit(update_df[[var]]).transform(update_df[[var]])
             pipe_dict[var] = pipeline
 
     # Convert categorical variables to numerical dummy variables
     if dummies:
-        df = pd.get_dummies(df)
+        update_df = pd.get_dummies(update_df)
 
-    return df, pipe_dict
+    return update_df, pipe_dict
 
