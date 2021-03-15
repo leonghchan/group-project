@@ -20,8 +20,8 @@ def clean(df, drop_list=[], fill_na={}):
     if fill_na:
         # For any key, value pairs in the supplied dictionary, set null values
         # to fill_val for the given variable
-        for variable, fill_val in fill_na.items():
-            update_df[variable] = update_df[variable].fillna(value=fill_val)
+        for fill_val, variables in fill_na.items():
+            update_df[variables] = update_df[variables].fillna(value=fill_val)
 
     return update_df
 
@@ -77,3 +77,16 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
 
     return update_df, pipe_dict
 
+def null_match(df, cols_list):
+    update_df = df.copy()
+    for sub_list in cols_list:
+        i = 0
+        j = len(sub_list)
+        de = deque(sub_list)  
+        while i < j:
+            base_col = de.pop()
+            mask = update_df[base_col].isnull()
+            update_df.loc[mask, sub_list] = np.nan
+            de.appendleft(base_col)
+            i += 1
+    return update_df
