@@ -1,4 +1,6 @@
-# Housing Prices
+# Predicting House Prices
+### Authored by L. Chan & G. Headley
+
 This project examines the efficacy of various regression models on predicting sale prices of homes in Ames, Iowa. 
 
 This 'readme' describes the high level processing we conducted, while referencing additional notebooks for specific details. 
@@ -42,6 +44,7 @@ drops = ['PoolQC', 'MiscFeature', 'FireplaceQu', 'Id']
 
 elec_na = full_data["Electrical"].isna()
 cleaner_data = full_data.drop(elec_na.loc[elec_na == True].index)
+
 # Make sure to drop the same index in the target variable
 target = target.drop(elec_na.loc[elec_na == True].index)
 
@@ -86,8 +89,3 @@ clean_data.isna().sum().sum()
 
 
 Excellent!
-
-
-```python
-
-```
