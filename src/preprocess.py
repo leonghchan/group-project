@@ -57,8 +57,26 @@ def feat_create(df, feat_dict):
 
     return update_df
 
-def ordinal_create():
-    pass
+def ordinal_create(df, var_list):
+    """Helper function to convert variables encoded as categoricals which are
+    actually ordinals. Uses a dictionary to remap, for example: 'NA' to 0, 'Po'
+    to 1, etc. Accepts a DataFrame and a list of variables to remap. Returns a
+    new DataFrame with edits applied. 
+
+    Should be run after filling null values or columns with nulls come out as
+    float instead of int"""
+    
+    # Dictionary for remapping strings to ordinal values
+    qual_mapper = {'NA': 0 , 'Po': 1, 'Fa': 2, 'TA':3, 'Gd':4, 'Ex': 5}
+
+    # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
+    # notebooks when editing source DataFrame directly
+    update_df = df.copy()
+    
+    for variable in var_list:
+        update_df[variable] = update_df[variable].replace(qual_mapper)
+
+    return update_df
 
 def preprocess(df, scale_list=[], transform_list=[], dummies=True):
     """Scales, transforms, and computes dummy variables. Accepts a DataFrame,
@@ -97,7 +115,6 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
         update_df = pd.get_dummies(update_df)
 
     return update_df, pipe_dict
-
 
 def null_match(df, cols_list):
     """Helper function to resolve null value discrepancies between 'sibling'
