@@ -1,13 +1,21 @@
 #!/usr/bin/env python
-""" Loading of housing price training data into pandas dataframe"""
+"""
+File: preprocess.py
+Description: Helper functions for data cleaning and feature engineering
+"""
 
 import pandas as pd
+import numpy as np
+from collections import deque
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import RobustScaler, PowerTransformer
 
 
 def clean(df, drop_list=[], fill_na={}):
-    """Helper function for cleaning up Housing Prices dataframe"""
+    """Helper function for cleaning up Housing Prices dataframe. Accepts a
+    DataFrame, a python list of column names to be dropped, and a dictionary of
+    fill values (key) for corresponding list of column names (value). Returns a
+    new DataFrame with drops and fills satisfied."""
     
     # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
     # notebooks when editing source DataFrame directly
@@ -18,8 +26,9 @@ def clean(df, drop_list=[], fill_na={}):
         update_df = update_df.drop(drop_list, axis=1)
 
     if fill_na:
-        # For any key, value pairs in the supplied dictionary, set null values
-        # to fill_val for the given variable
+        # For any key (fill value) and value (list of columns) pairs in the
+        # supplied dictionary, set null values to fill_val for the given
+        # variable(s)
         for fill_val, variables in fill_na.items():
             update_df[variables] = update_df[variables].fillna(value=fill_val)
 
@@ -36,6 +45,7 @@ def feat_create(df, feat_dict):
     # notebooks when editing source DataFrame directly
     update_df = df.copy()
 
+    # Unwrap nested dictionary per docstring
     for out_feat, in_feat in feat_dict.items():
         new_col = pd.Series()
 
@@ -51,24 +61,35 @@ def ordinal_create():
     pass
 
 def preprocess(df, scale_list=[], transform_list=[], dummies=True):
-    """Scales, transforms, and computes dummies for variables in training
-    dataset"""
+    """Scales, transforms, and computes dummy variables. Accepts a DataFrame,
+    list of columns to scale, list of columns to transform toward normality,
+    and a boolean flag for computing dummy variables using pandas built-in
+    function. Returns a new DataFrame with changes applied. 
+
+    Also returns a dictionary of variables (key) and sklearn pipelines (value)
+    to record modifications to training variables such that they might be
+    replicated on test data"""
 
     # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
     # notebooks when editing source DataFrame directly
     update_df = df.copy()
 
+    # dictionary to store fitted sklearn pipeline such that the same parameters
+    # can later be applied to test data
     pipe_dict = {}
 
     if scale_list:
         for var in scale_list:
+            # If variable is flagged for both scaling and transformation, build
+            # such a pipeline
             if var in transform_list:
                 pipeline = Pipeline([('scaler', RobustScaler()),('transform',
                     PowerTransformer())])                
+            # Otherwise, just build a scaling pipeline
             else:
                 pipeline = Pipeline([('scaler', RobustScaler())])                
 
-            update_df[var] = pipeline.fit(update_df[[var]]).transform(update_df[[var]])
+            update_df[var] = pipeline.fit(update_df[[var]]).transform(update_df[[var]])  # Is this line doing too much?
             pipe_dict[var] = pipeline
 
     # Convert categorical variables to numerical dummy variables
@@ -77,16 +98,33 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
 
     return update_df, pipe_dict
 
+
 def null_match(df, cols_list):
+    """Helper function to resolve null value discrepancies between 'sibling'
+    columns. For example, most Garage variables have the same number of nulls,
+    save for one or two variables, which have fewer. This function accepts a
+    DataFrame and a nested list of 'sibling' columns to be matched. 
+
+    Example input list: [["GarageType", "GarageCond", "GarageFinish"],
+    ["BsmtQual", "BsmtCond"]]"""
+
+    # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
+    # notebooks when editing source DataFrame directly
     update_df = df.copy()
+
+    # Burrow into nested list and use deque to cycle through each column in the
+    # sub_list in turn, extract the rows with null values for that 'base_col'
+    # and set to null all corresponding rows in the other 'sibling' columns
     for sub_list in cols_list:
         i = 0
         j = len(sub_list)
-        de = deque(sub_list)  
+        queue = deque(sub_list)  
+
         while i < j:
-            base_col = de.pop()
+            base_col = queue.pop()
             mask = update_df[base_col].isnull()
             update_df.loc[mask, sub_list] = np.nan
-            de.appendleft(base_col)
+            queue.appendleft(base_col)
             i += 1
+
     return update_df

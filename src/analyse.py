@@ -7,54 +7,50 @@ fitting a distribution to said variables, and transforming them accordingly
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-# from numpy import reshape
 from scipy import stats
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import PowerTransformer
 
 
-def analyse(variable):
+def analyse(data):
     """Accepts a pandas Series or DataFrame and returns skewness and kurtosis
-    analysis of the variable(s)"""
+    analysis of the data"""
 
     # Pandas has built-in skew and kurtosis functions for DataFrames and
-    # Series, so we just call those on our input variable and organise them for
+    # Series, so we just call those on our input data and organise them for
     # printing
-    if isinstance(variable, pd.core.frame.Series):
-        results = pd.DataFrame({"Skewness": variable.skew(), "Kurtosis":
-            variable.kurtosis()}, index=[variable.name])
+    if isinstance(data, pd.core.frame.Series):
+        results = pd.DataFrame({"Skewness": data.skew(), "Kurtosis":
+            data.kurtosis()}, index=[data.name])
         return results
 
-    elif isinstance(variable, pd.core.frame.DataFrame):
+    elif isinstance(data, pd.core.frame.DataFrame):
         results = pd.DataFrame()
-        results["Skewness"] = variable.skew()
-        results["Kurtosis"] = variable.kurtosis()
+        results["Skewness"] = data.skew()
+        results["Kurtosis"] = data.kurtosis()
         results.sort_values("Skewness", ascending=False, inplace=True)
         return results
     else:
-        print("You must supply either a pandas Series or DataFrame. You gave{}".format(type(variable)))
+        print("You must supply either a pandas Series or DataFrame. You gave{}".format(type(data)))
 
-def test_trans(variable):
-    """Accepts data for a single variable in the form of a pandas Series and
-    computes transformation of this variable using sklearn PowerTransformer and
-    plots before and after results to check for normality"""
+def test_trans(series):
+    """Accepts a single variable in the form of a pandas Series and computes
+    a normality transformation of this data using sklearn RobustScaler and
+    PowerTransformer and plots before and after results for verification"""
 
     scaler = RobustScaler()
-    col_name = variable.columns[0]
-    variable = variable.rename(columns={col_name:'raw'})
-    scaler.fit(variable)
+    col_name = series.columns[0]
+    series = series.rename(columns={col_name:'raw'})
+    scaler.fit(series)
       
-    variable['scaled'] = scaler.transform(variable)
+    series['scaled'] = scaler.transform(series)
     pt = PowerTransformer()
-    pt.fit(variable[['scaled']])
-    trans_var = pt.transform(variable[['scaled']])
-    variable['transformed'] = trans_var
+    pt.fit(series[['scaled']])
+    trans_var = pt.transform(series[['scaled']])
+    series['transformed'] = trans_var
     
     fig, axs = plt.subplots(1, 3)
-    sns.histplot(variable, x='raw', ax=axs[0])
-    sns.histplot(variable, x='scaled', ax=axs[1])
-    sns.histplot(variable, x='transformed', ax=axs[2])
+    sns.histplot(series, x='raw', ax=axs[0])
+    sns.histplot(series, x='scaled', ax=axs[1])
+    sns.histplot(series, x='transformed', ax=axs[2])
     plt.show()
-
-    # return trans_var
-

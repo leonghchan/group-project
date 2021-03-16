@@ -18,8 +18,8 @@ from analyse import test_trans
 def main():
     """ main function """
 
-    drops = ['PoolQC', 'MiscFeature', 'FireplaceQu', 'Id']
-    fills = {'MasVnrArea': 0.0, 'LotFrontage': 0.0}
+    drops = ['PoolQC', 'MiscFeature', 'FireplaceQu', 'Id'] 
+    fills = {'MasVnrArea': 0.0, 'LotFrontage': 0.0} 
     scale = ['SalePrice', 'LotArea']
     transform = ['SalePrice']
     
