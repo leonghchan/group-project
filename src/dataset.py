@@ -120,6 +120,7 @@ def make_dataset(dataset={}):
         col for col in final_train.columns
         if (final_train.dtypes[col] != "object") and (col not in ordinal_vars)
     ]
+    # scale_feats = ["SalePrice"]
     trans_feats = [
         'SalePrice', 'LotArea', 'Total_SF', 'GrLivArea', 'LotFrontage',
         'GarageArea'
