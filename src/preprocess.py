@@ -95,25 +95,42 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
     # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
     # notebooks when editing source DataFrame directly
     update_df = df.copy()
+    variables = set(scale_list + transform_list)
 
     # dictionary to store fitted sklearn pipeline such that the same parameters
     # can later be applied to test data
     pipe_dict = {}
 
-    if scale_list:
-        for var in scale_list:
-            # If variable is flagged for both scaling and transformation, build
-            # such a pipeline
-            if var in transform_list:
-                pipeline = Pipeline([('scaler', RobustScaler()),
-                                     ('transform', PowerTransformer())])
-            # Otherwise, just build a scaling pipeline
-            else:
-                pipeline = Pipeline([('scaler', RobustScaler())])
+    # if scale_list:
+    #     for var in scale_list:
+    #         # If variable is flagged for both scaling and transformation,
+    #         # build such a pipeline
+    #         if var in transform_list:
+    #             pipeline = Pipeline([('scaler', RobustScaler()),
+    #                                  ('transform', PowerTransformer())])
+    #         # Otherwise, just build a scaling pipeline
+    #         else:
+    #             pipeline = Pipeline([('scaler', RobustScaler())])
 
-            update_df[var] = pipeline.fit(update_df[[var]]).transform(
-                update_df[[var]])  # Is this line doing too much?
-            pipe_dict[var] = pipeline
+    #         update_df[var] = pipeline.fit(update_df[[var]]).transform(
+    #             update_df[[var]])  # Is this line doing too much?
+    #         pipe_dict[var] = pipeline
+
+    for var in variables:
+        # If variable is flagged for both scaling and transformation, build
+        # such a pipeline
+        if var in (transform_list and scale_list):
+            pipeline = Pipeline([('scaler', RobustScaler()),
+                                 ('transform', PowerTransformer())])
+        # Otherwise, just build a scaling pipeline
+        elif var in (scale_list):
+            pipeline = Pipeline([('scaler', RobustScaler())])
+        elif var in (transform_list):
+            pipeline = Pipeline([('transform', PowerTransformer())])
+
+        update_df[var] = pipeline.fit(update_df[[var]]).transform(
+            update_df[[var]])  # Is this line doing too much?
+        pipe_dict[var] = pipeline
 
     # Convert categorical variables to numerical dummy variables
     if dummies:
