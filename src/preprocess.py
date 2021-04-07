@@ -70,7 +70,7 @@ def ordinal_create(df, var_list):
     float instead of int"""
 
     # Dictionary for remapping strings to ordinal values
-    qual_mapper = {'NA': 0, 'Po': 1, 'Fa': 2, 'TA': 3, 'Gd': 4, 'Ex': 5}
+    qual_mapper = {'NA': 0, 'None':0, 'Po': 1, 'Fa': 2, 'TA': 3, 'Gd': 4, 'Ex': 5}
 
     # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
     # notebooks when editing source DataFrame directly
@@ -101,43 +101,61 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
     # can later be applied to test data
     pipe_dict = {}
 
-    # if scale_list:
-    #     for var in scale_list:
-    #         # If variable is flagged for both scaling and transformation,
-    #         # build such a pipeline
-    #         if var in transform_list:
-    #             pipeline = Pipeline([('scaler', RobustScaler()),
-    #                                  ('transform', PowerTransformer())])
-    #         # Otherwise, just build a scaling pipeline
-    #         else:
-    #             pipeline = Pipeline([('scaler', RobustScaler())])
+#     if scale_list:
+#         for var in scale_list:
+#             # If variable is flagged for both scaling and transformation,
+#             # build such a pipeline
+#             if var in transform_list:
+#                 pipeline = Pipeline([('scaler', RobustScaler()),
+#                                      ('transform', PowerTransformer())])
+#             # Otherwise, just build a scaling pipeline
+#             else:
+#                 pipeline = Pipeline([('scaler', RobustScaler())])
 
-    #         update_df[var] = pipeline.fit(update_df[[var]]).transform(
-    #             update_df[[var]])  # Is this line doing too much?
-    #         pipe_dict[var] = pipeline
+#             update_df[var] = pipeline.fit(update_df[[var]]).transform(
+#                 update_df[[var]])  # Is this line doing too much?
+#             pipe_dict[var] = pipeline
 
     for var in variables:
         # If variable is flagged for both scaling and transformation, build
         # such a pipeline
-        if var in (transform_list and scale_list):
+        if (var in transform_list and var in scale_list):
             pipeline = Pipeline([('scaler', RobustScaler()),
                                  ('transform', PowerTransformer())])
+            pipe_dict[var] = pipeline
+            update_df[var] = pipeline.fit(update_df[[var]]).transform(
+                update_df[[var]])
         # Otherwise, just build a scaling pipeline
-        elif var in (scale_list):
+        elif var in scale_list:
             pipeline = Pipeline([('scaler', RobustScaler())])
-        elif var in (transform_list):
+            pipe_dict[var] = pipeline
+            update_df[var] = pipeline.fit(update_df[[var]]).transform(
+                update_df[[var]])
+        else:
             pipeline = Pipeline([('transform', PowerTransformer())])
-
-        update_df[var] = pipeline.fit(update_df[[var]]).transform(
-            update_df[[var]])  # Is this line doing too much?
-        pipe_dict[var] = pipeline
+            pipe_dict[var] = pipeline
+            update_df[var] = pipeline.fit(update_df[[var]]).transform(
+                update_df[[var]])
+       
 
     # Convert categorical variables to numerical dummy variables
     if dummies:
-        update_df = pd.get_dummies(update_df)
+        update_df = pd.get_dummies(update_df, drop_first=True)
 
     return update_df, pipe_dict
 
+
+def pipe_apply(df, pipe_dict, direction='forward'):
+    update_df = df.copy()
+    
+    for key, val in pipe_dict.items():
+        if key in list(update_df.columns):
+            if direction == 'forward':
+                update_df[key] = val.transform(update_df[[key]])
+            elif direction == 'inverse':
+                update_df[key] = val.inverse_transform(update_df[[key]])
+            
+    return update_df
 
 def null_match(df, cols_list):
     """Helper function to resolve null value discrepancies between 'sibling'
