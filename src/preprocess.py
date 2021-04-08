@@ -82,7 +82,7 @@ def ordinal_create(df, var_list):
     return update_df
 
 
-def preprocess(df, scale_list=[], transform_list=[], dummies=True):
+def preprocess(df, scale_list=[], transform_list=[]):
     """Scales, transforms, and computes dummy variables. Accepts a DataFrame,
     list of columns to scale, list of columns to transform toward normality,
     and a boolean flag for computing dummy variables using pandas built-in
@@ -100,21 +100,6 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
     # dictionary to store fitted sklearn pipeline such that the same parameters
     # can later be applied to test data
     pipe_dict = {}
-
-#     if scale_list:
-#         for var in scale_list:
-#             # If variable is flagged for both scaling and transformation,
-#             # build such a pipeline
-#             if var in transform_list:
-#                 pipeline = Pipeline([('scaler', RobustScaler()),
-#                                      ('transform', PowerTransformer())])
-#             # Otherwise, just build a scaling pipeline
-#             else:
-#                 pipeline = Pipeline([('scaler', RobustScaler())])
-
-#             update_df[var] = pipeline.fit(update_df[[var]]).transform(
-#                 update_df[[var]])  # Is this line doing too much?
-#             pipe_dict[var] = pipeline
 
     for var in variables:
         # If variable is flagged for both scaling and transformation, build
@@ -136,11 +121,6 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
             pipe_dict[var] = pipeline
             update_df[var] = pipeline.fit(update_df[[var]]).transform(
                 update_df[[var]])
-       
-
-    # Convert categorical variables to numerical dummy variables
-    if dummies:
-        update_df = pd.get_dummies(update_df, drop_first=True)
 
     return update_df, pipe_dict
 
