@@ -4,11 +4,12 @@ File: preprocess.py
 Description: Helper functions for data cleaning and feature engineering
 """
 
-import pandas as pd
-import numpy as np
 from collections import deque
+
+import numpy as np
+import pandas as pd
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import RobustScaler, PowerTransformer
+from sklearn.preprocessing import PowerTransformer, RobustScaler
 
 
 def clean(df, drop_list=[], fill_na={}):
@@ -16,14 +17,14 @@ def clean(df, drop_list=[], fill_na={}):
     DataFrame, a python list of column names to be dropped, and a dictionary of
     fill values (key) for corresponding list of column names (value). Returns a
     new DataFrame with drops and fills satisfied."""
-    
+
     # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
     # notebooks when editing source DataFrame directly
     update_df = df.copy()
 
     if drop_list:
         # Drop any columns supplied in the drop_list
-        update_df = update_df.drop(drop_list, axis=1)
+        update_df = update_df.drop(columns=drop_list)
 
     if fill_na:
         # For any key (fill value) and value (list of columns) pairs in the
@@ -33,6 +34,7 @@ def clean(df, drop_list=[], fill_na={}):
             update_df[variables] = update_df[variables].fillna(value=fill_val)
 
     return update_df
+
 
 def feat_create(df, feat_dict):
     """Accepts a DataFrame and a nested dictionary used to compute new features
@@ -51,11 +53,12 @@ def feat_create(df, feat_dict):
 
         for multiplier, feats in in_feat.items():
             new_col = new_col.add(multiplier * update_df[feats].sum(axis=1),
-                    fill_value=0)
+                                  fill_value=0)
 
         update_df[out_feat] = new_col
 
     return update_df
+
 
 def ordinal_create(df, var_list):
     """Helper function to convert variables encoded as categoricals which are
@@ -65,18 +68,19 @@ def ordinal_create(df, var_list):
 
     Should be run after filling null values or columns with nulls come out as
     float instead of int"""
-    
+
     # Dictionary for remapping strings to ordinal values
-    qual_mapper = {'NA': 0 , 'Po': 1, 'Fa': 2, 'TA':3, 'Gd':4, 'Ex': 5}
+    qual_mapper = {'NA': 0, 'None':0, 'Po': 1, 'Fa': 2, 'TA': 3, 'Gd': 4, 'Ex': 5}
 
     # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
     # notebooks when editing source DataFrame directly
     update_df = df.copy()
-    
+
     for variable in var_list:
         update_df[variable] = update_df[variable].replace(qual_mapper)
 
     return update_df
+
 
 def preprocess(df, scale_list=[], transform_list=[], dummies=True):
     """Scales, transforms, and computes dummy variables. Accepts a DataFrame,
@@ -91,30 +95,67 @@ def preprocess(df, scale_list=[], transform_list=[], dummies=True):
     # Compute operations on fresh copy of DataFrame to avoid errors in Jupyter
     # notebooks when editing source DataFrame directly
     update_df = df.copy()
+    variables = set(scale_list + transform_list)
 
     # dictionary to store fitted sklearn pipeline such that the same parameters
     # can later be applied to test data
     pipe_dict = {}
 
-    if scale_list:
-        for var in scale_list:
-            # If variable is flagged for both scaling and transformation, build
-            # such a pipeline
-            if var in transform_list:
-                pipeline = Pipeline([('scaler', RobustScaler()),('transform',
-                    PowerTransformer())])                
-            # Otherwise, just build a scaling pipeline
-            else:
-                pipeline = Pipeline([('scaler', RobustScaler())])                
+#     if scale_list:
+#         for var in scale_list:
+#             # If variable is flagged for both scaling and transformation,
+#             # build such a pipeline
+#             if var in transform_list:
+#                 pipeline = Pipeline([('scaler', RobustScaler()),
+#                                      ('transform', PowerTransformer())])
+#             # Otherwise, just build a scaling pipeline
+#             else:
+#                 pipeline = Pipeline([('scaler', RobustScaler())])
 
-            update_df[var] = pipeline.fit(update_df[[var]]).transform(update_df[[var]])  # Is this line doing too much?
+#             update_df[var] = pipeline.fit(update_df[[var]]).transform(
+#                 update_df[[var]])  # Is this line doing too much?
+#             pipe_dict[var] = pipeline
+
+    for var in variables:
+        # If variable is flagged for both scaling and transformation, build
+        # such a pipeline
+        if (var in transform_list and var in scale_list):
+            pipeline = Pipeline([('scaler', RobustScaler()),
+                                 ('transform', PowerTransformer())])
             pipe_dict[var] = pipeline
+            update_df[var] = pipeline.fit(update_df[[var]]).transform(
+                update_df[[var]])
+        # Otherwise, just build a scaling pipeline
+        elif var in scale_list:
+            pipeline = Pipeline([('scaler', RobustScaler())])
+            pipe_dict[var] = pipeline
+            update_df[var] = pipeline.fit(update_df[[var]]).transform(
+                update_df[[var]])
+        else:
+            pipeline = Pipeline([('transform', PowerTransformer())])
+            pipe_dict[var] = pipeline
+            update_df[var] = pipeline.fit(update_df[[var]]).transform(
+                update_df[[var]])
+       
 
     # Convert categorical variables to numerical dummy variables
     if dummies:
-        update_df = pd.get_dummies(update_df)
+        update_df = pd.get_dummies(update_df, drop_first=True)
 
     return update_df, pipe_dict
+
+
+def pipe_apply(df, pipe_dict, direction='forward'):
+    update_df = df.copy()
+    
+    for key, val in pipe_dict.items():
+        if key in list(update_df.columns):
+            if direction == 'forward':
+                update_df[key] = val.transform(update_df[[key]])
+            elif direction == 'inverse':
+                update_df[key] = val.inverse_transform(update_df[[key]])
+            
+    return update_df
 
 def null_match(df, cols_list):
     """Helper function to resolve null value discrepancies between 'sibling'
@@ -135,7 +176,7 @@ def null_match(df, cols_list):
     for sub_list in cols_list:
         i = 0
         j = len(sub_list)
-        queue = deque(sub_list)  
+        queue = deque(sub_list)
 
         while i < j:
             base_col = queue.pop()
